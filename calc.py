@@ -1,4 +1,4 @@
-OPERATORS = ('+', '-', '*', '/', '(', ')')
+OPERATORS = ('+', '-', '*', '/', '(', ')', '^')
 
 class Calculator:
     def conver_operand_to_number_and_append(self, operand: str, parsed_list: list) -> int|float:
@@ -24,6 +24,7 @@ class Calculator:
         :param expression: expression to be calculated
         :returns parsed_list: expression represented as list of operands and operators.
         """
+        expression = expression.replace(' ', '')
         parsed_list = []
         operand = ''
         for char in expression:
@@ -40,7 +41,7 @@ class Calculator:
 
         if operand:
             self.conver_operand_to_number_and_append(operand, parsed_list)
-            
+
         return parsed_list
     
     def parenthesis_parser(self, parsed_expression: list) -> list:
@@ -58,12 +59,9 @@ class Calculator:
             elif element == ')':
                 idx_1 = last_open_parenthesis_idx
                 parsed_expression[idx_1:idx+1] = [self.calculate_expression(parsed_expression[idx_1+1:idx])]
-                break
-        
-        if last_open_parenthesis_idx:
-            return self.parenthesis_parser(parsed_expression)
-        else:
-            return parsed_expression
+                parsed_expression = self.parenthesis_parser(parsed_expression)
+
+        return parsed_expression
 
     def calculate_expression(self, expression: list) -> int:
         """
@@ -75,8 +73,28 @@ class Calculator:
         expression = self.multiply_and_divide(expression)
         expression = self.add_and_subtract(expression)
         return expression[0]
+
+    def exponetiation(self, expression: list):
+        """
+        Exponetation is right assiociative!
+        """
+        r_idx = len(expression) - 1 
+        l_idx = r_idx - 2
+
+        while l_idx >= 0:
+            operand = expression[r_idx-1]
+            if operand == '^':
+                expression[l_idx:r_idx] = [expression[l_idx]**expression[r_idx]]
+                expression = self.exponetiation(expression)
+            l_idx -= 2
+            r_idx -= 2
+
+        return expression
     
     def multiply_and_divide(self, expression: list):
+        """
+        Performs all necessary multiplication and division operations:
+        """
         for idx, operand in enumerate(expression):
             if operand == '*':
                 expression[idx-1:idx+2] = [expression[idx-1]*expression[idx+1]]
@@ -110,7 +128,8 @@ class Calculator:
 
         list_parsed_exp = self.preparse_expression(expression)
         calc_parenthesis = self.parenthesis_parser(list_parsed_exp)
-        calc_mult_div = self.multiply_and_divide(calc_parenthesis)
+        calc_exponent = self.exponetiation(calc_parenthesis)
+        calc_mult_div = self.multiply_and_divide(calc_exponent)
         calc_add_sub = self.add_and_subtract(calc_mult_div)
 
         return calc_add_sub[0]
